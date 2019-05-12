@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+</head>
+<body>
+<div style="background-color:palegreen; padding:6px;">Mint CSV to Quicken QIF Converter</div>
+<input type="file" id="file" name="files[]" multiple />
+<ul>
+<li>If you select multiple files, any duplicate transactions will be ignored.<br>
+    (Duplicate transactions have the same date, description and amount)</li>
+<li>So you can select the files from the previous two months, and only new transactions will be output.</li>
+<li>Account is entered in the memo field.</li>
+<li>Category is left blank because Mint categories are different from Quicken.</li>
+<li>This program runs in Javascript entirely within your browser.  No data is sent anywhere.<br>
+    (Your browser may save data in the cache and downloads directory.)</li>
+<li>This program has been to tested to work on Quicken 2016, Chrome 74, Edge 42, Firefox 66, Internet Explorer 11, Opera 60, Safari 12.</li>
+</ul>
+<a id="output" download="result.qif"></a>
+
+<script>
+  'use strict';
+
+  // CSV convertor by niry
+  function csvToArray(text)
+  {
+      let p = '', row = [''], ret = [row], i = 0, r = 0, s = !0, l;
+      for (let j = 0; j < text.length; j++) {
+          l = text.charAt(j);
+          if ('"' === l) {
+              if (s && l === p) row[i] += l;
+              s = !s;
+          } else if (',' === l && s) l = row[++i] = '';
+          else if ('\n' === l && s) {
+              if ('\r' === p) row[i] = row[i].slice(0, -1);
+              row = ret[++r] = [l = '']; i = 0;
+          } else row[i] += l;
+          p = l;
+      }
+
+      // Remove blank last line
+      if(ret[ret.length-1] == "") ret.length--;
+
+      // Remove header
+      ret.shift();
+
+      return ret;
+  };
+
+  // Sort by Date, then by Original Description, then by Amount
+  function compare_data(a,b)
+  {
+      if(      a['stamp'] < b['stamp'] ) return -1;
+      else if( a['stamp'] > b['stamp'] ) return  1;
+      else
+      {
+          if(      a[2] < b[2] ) return -1;
+          else if( a[2] > b[2] ) return  1;
+          else
+          {
+              if(      a[3] < b[3] ) return -1;
+              else if( a[3] > b[3] ) return  1;
+              else                   return  0;
+          }
+      }
+  }
+
+  // Recursive function to read files array
+  function readFileArray(files,i,data)
+  {
+      if( i == files.length ) output_result( data );
+      else
+      {
+          let fr = new FileReader();
+          fr.onload = function(e)
+          {
+              // Add csv parsed result to end of global data array
+              data = data.concat( csvToArray( e.target.result ));
+
+              // Recurse
+              readFileArray( files, i+1, data );
+          };
+
+          // Read i'th file in array
+          fr.readAsText(files[i]);
+      }
+  }
+
+  function handleFileSelect(event)
+  {
+      // Start reading file array
+      readFileArray( event.target.files, 0, [] );
+  }
+
+  function output_result(data)
+  {
+      // Add date stamp for compare
+      data.forEach(function(row)
+      {
+          row.stamp = Date.parse( row[0] );
+      });
+
+      // Sort combined data by date stamp, original description, amount
+      data.sort(compare_data);
+
+      console.log(data);
+
+      // Only output unique data
+      // Runs of multiple duplicates must be ignored
+      // Algorithm: 1. Compare each pair of rows
+      //            2. If different and not the end of a string of duplicates, output row
+      let result = '';
+      let duplicate = false;
+      for( let i = 0; i < data.length; i++ )
+      {
+          //console.log(data[i]);
+
+          // Can't compare final element to anything
+          if(( i < data.length-1 ) && ( compare_data( data[i], data[i+1] ) == 0 ))
+          {
+              duplicate = true;
+          }
+          else
+          {
+              if( !duplicate )
+              {
+                  let date = data[i][0];
+                  let description = data[i][2];
+                  let amount = data[i][3];
+                  let memo = data[i][6];
+
+                  if( data[i][4] == 'debit' ) amount = "-" + amount;
+
+                  result += "D" + date + "\n";
+                  result += "U" + amount + "\n";
+                  result += "T" + amount + "\n";
+                  result += "P" + description + "\n";
+                  result += "M" + memo + "\n";
+                  result += "L\n";
+                  result += "^\n";
+              }
+              duplicate = false;
+          }
+      }
+
+      // Output result
+      console.log(result);
+      let qif = new Blob([result], {type: 'text/plain'});
+      if( window.navigator && window.navigator.msSaveBlob )
+      {
+          window.navigator.msSaveBlob(qif, 'result.qif');
+      }
+      else
+      {
+          document.getElementById('output').href = window.URL.createObjectURL(qif);
+          document.getElementById('output').innerHTML = "Click here to download QIF";
+      }
+  }
+
+  document.getElementById('file').addEventListener('change', handleFileSelect, false);
+</script>
+</body>
+</html>
