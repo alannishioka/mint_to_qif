@@ -68,8 +68,7 @@
   // Recursive function to read files array
   function readFileArray(files,i,data)
   {
-      if( i == files.length ) output_result( data );
-      else
+      if( i < files.length )
       {
           let fr = new FileReader();
           fr.onload = function(e)
@@ -83,6 +82,10 @@
 
           // Read i'th file in array
           fr.readAsText(files[i]);
+      }
+      else
+      {
+          output_result( data );
       }
   }
 
