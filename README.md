@@ -1,4 +1,4 @@
-# Mint CSV to Quicken QIF Converter
+# JavaScript Mint CSV to Quicken QIF Converter
 
 Convert CSV file of transactions to QIF for import into Quicken
 
@@ -10,7 +10,7 @@ Convert CSV file of transactions to QIF for import into Quicken
 * So you can select the files from the previous two months, and only new transactions will be output.
 * Account is entered in the memo field.
 * Category is left blank because Mint categories are different from Quicken.
-* This program runs in Javascript entirely within your browser.  No data is sent anywhere.  (Your browser may save data in the cache and downloads directory.)
+* This program runs in JavaScript entirely within your browser.  No data is sent anywhere.  (Your browser may save data in the cache and downloads directory.)
 * This program has been to tested to work on Quicken 2016, Chrome 74, Edge 42, Firefox 66, Internet Explorer 11, Opera 60, Safari 12.
 
 ## This program uses:
@@ -22,10 +22,10 @@ Convert CSV file of transactions to QIF for import into Quicken
 * A custom compare function to sort an array of objects
 * An O(nlogn) algorithm to only output unique items
 * No external libraries
-* Internet Explorer compatible Javascript
+* Internet Explorer compatible JavaScript
 
 ## Changes:
-* d3.csv to parse csv replaced with function so no external libraries.
+* d3.csv to parse CSV replaced with function so no external libraries.
 * for..of replaced with for loop for Internet Explorer
 * Promise.all replaced with recursive function for Internet Explorer
 * Replaced arrow notation because I hate it.
