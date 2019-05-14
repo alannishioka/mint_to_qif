@@ -6,11 +6,10 @@ Convert CSV file of transactions to QIF for import into Quicken
 
 ## Notes:
 
-* If you select multiple files, any duplicate transactions will be ignored.  (Duplicate transactions have the same date, description and amount)
+* If you select multiple files, any duplicate transactions will be ignored.  (Duplicate transactions have the same account, date, description and amount)
 * So you can select the files from the previous two months, and only new transactions will be output.
-* Account is entered in the memo field.
-* Category is left blank because Mint categories are different from Quicken.
-* This program runs in JavaScript entirely within your browser.  No data is sent anywhere.  (Your browser may save data in the cache and downloads directory.)
+* The account names in Mint must match the names in Quicken **exactly**.
+* This program runs in JavaScript entirely within your browser.  No data is sent anywhere.
 * This program has been to tested to work on Quicken 2016, Chrome 74, Edge 42, Firefox 66, Internet Explorer 11, Opera 60, Safari 12.
 
 ## This program uses:
@@ -29,3 +28,4 @@ Convert CSV file of transactions to QIF for import into Quicken
 * for..of replaced with for loop for Internet Explorer
 * Promise.all replaced with recursive function for Internet Explorer
 * Replaced arrow notation because I hate it.
+* Added checkbox for account, category, notes

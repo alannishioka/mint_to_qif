@@ -5,15 +5,16 @@
 </head>
 <body>
 <div style="background-color:palegreen; padding:6px;">Mint CSV to Quicken QIF Converter</div>
+<input type="checkbox" id="account">Transfer Account
+<input type="checkbox" id="category">Transfer Category
+<input type="checkbox" id="notes">Transfer Notes
 <input type="file" id="file" name="files[]" multiple />
 <ul>
 <li>If you select multiple files, any duplicate transactions will be ignored.<br>
-    (Duplicate transactions have the same date, description and amount)</li>
+    (Duplicate transactions have the same account, date, description and amount)</li>
 <li>So you can select the files from the previous two months, and only new transactions will be output.</li>
-<li>Account is entered in the memo field.</li>
-<li>Category is left blank because Mint categories are different from Quicken.</li>
-<li>This program runs in Javascript entirely within your browser.  No data is sent anywhere.<br>
-    (Your browser may save data in the cache and downloads directory.)</li>
+<li>The account names in Mint must match the names in Quicken <b>exactly</b>.</li>
+<li>This program runs in JavaScript entirely within your browser.  No data is sent anywhere.</li>
 <li>This program has been to tested to work on Quicken 2016, Chrome 74, Edge 42, Firefox 66, Internet Explorer 11, Opera 60, Safari 12.</li>
 </ul>
 <a id="output" download="result.qif"></a>
@@ -47,20 +48,25 @@
       return ret;
   };
 
-  // Sort by Date, then by Original Description, then by Amount
+  // Sort by Account, then by Date, then by Original Description, then by Amount
   function compare_data(a,b)
   {
-      if(      a['stamp'] < b['stamp'] ) return -1;
-      else if( a['stamp'] > b['stamp'] ) return  1;
+      if(      a[6] < b[6] ) return -1;
+      else if( a[6] > b[6] ) return  1;
       else
       {
-          if(      a[2] < b[2] ) return -1;
-          else if( a[2] > b[2] ) return  1;
+          if(      a['stamp'] < b['stamp'] ) return -1;
+          else if( a['stamp'] > b['stamp'] ) return  1;
           else
           {
-              if(      a[3] < b[3] ) return -1;
-              else if( a[3] > b[3] ) return  1;
-              else                   return  0;
+              if(      a[2] < b[2] ) return -1;
+              else if( a[2] > b[2] ) return  1;
+              else
+              {
+                  if(      a[3] < b[3] ) return -1;
+                  else if( a[3] > b[3] ) return  1;
+                  else                   return  0;
+              }
           }
       }
   }
@@ -112,6 +118,7 @@
       // Runs of multiple duplicates must be ignored
       // Algorithm: 1. Compare each pair of rows
       //            2. If different and not the end of a string of duplicates, output row
+      let account = '';
       let result = '';
       let duplicate = false;
       for( let i = 0; i < data.length; i++ )
@@ -127,19 +134,34 @@
           {
               if( !duplicate )
               {
+                  // Output header when account changes
+                  if( document.getElementById('category').checked && ( account != data[i][6] ))
+                  {
+                      account = data[i][6];
+
+                      result += "!Account\n";
+                      result += "N" + account + "\n";
+                      result += "^\n";
+                      result += "!Type:Cash\n";
+                  }
+
                   let date = data[i][0];
                   let description = data[i][2];
                   let amount = data[i][3];
-                  let memo = data[i][6];
+                  let category = data[i][5];
+                  let notes = data[i][8];
 
                   if( data[i][4] == 'debit' ) amount = "-" + amount;
+
+                  // Replace carriage return or line feed in notes
+                  notes = notes.replace( /[\r\n]+/g, " " );
 
                   result += "D" + date + "\n";
                   result += "U" + amount + "\n";
                   result += "T" + amount + "\n";
                   result += "P" + description + "\n";
-                  result += "M" + memo + "\n";
-                  result += "L\n";
+                  if( document.getElementById('notes').checked )    result += "M" + notes + "\n";
+                  if( document.getElementById('category').checked ) result += "L" + category + "\n";
                   result += "^\n";
               }
               duplicate = false;
