@@ -5,16 +5,18 @@
 </head>
 <body>
 <div style="background-color:palegreen; padding:6px;">Mint CSV to Quicken QIF Converter</div>
-<input type="checkbox" id="account">Transfer Account Names
-<input type="checkbox" id="category">Transfer Category
-<input type="checkbox" id="notes">Transfer Notes
+Include:
+<input type="checkbox" id="account">Account Name
+<input type="checkbox" id="category">Category
+<input type="checkbox" id="notes">Notes
 <input type="file" id="file" name="files[]" multiple />
 <ul>
 <li>If you select multiple files, any duplicate transactions will be ignored.<br>
     (Duplicate transactions have the same account name, date, description and amount)</li>
 <li>So you can select the files from the previous two months, and only new transactions will be output.</li>
-<li>The account names in Mint must match the names in Quicken <b>exactly</b>.</li>
-<li>Rename an account in Mint with <a href="https://help.mint.com/Accounts-and-Transactions/888958891/How-can-I-rename-an-account.htm">these instructions</a>.</li>
+<li>If you include account name, the transaction will be imported into a Quicken account of <b>exactly</b> the same name.</li>
+<li>If you don't include account name, the transactions must be imported into a Quicken cash account.</li>
+<li>You can rename an account in Mint with <a href="https://help.mint.com/Accounts-and-Transactions/888958891/How-can-I-rename-an-account.htm">these instructions</a>.</li>
 <li>This program runs in JavaScript entirely within your browser.  No data is sent anywhere.</li>
 <li>This program has been to tested to work on Quicken 2016, Chrome 74, Edge 42, Firefox 66, Internet Explorer 11, Opera 60, Safari 12.</li>
 <li>Author: Alan Nishioka (alan@nishioka.com)<br>
