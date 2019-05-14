@@ -5,17 +5,20 @@
 </head>
 <body>
 <div style="background-color:palegreen; padding:6px;">Mint CSV to Quicken QIF Converter</div>
-<input type="checkbox" id="account">Transfer Account
+<input type="checkbox" id="account">Transfer Account Names
 <input type="checkbox" id="category">Transfer Category
 <input type="checkbox" id="notes">Transfer Notes
 <input type="file" id="file" name="files[]" multiple />
 <ul>
 <li>If you select multiple files, any duplicate transactions will be ignored.<br>
-    (Duplicate transactions have the same account, date, description and amount)</li>
+    (Duplicate transactions have the same account name, date, description and amount)</li>
 <li>So you can select the files from the previous two months, and only new transactions will be output.</li>
 <li>The account names in Mint must match the names in Quicken <b>exactly</b>.</li>
+<li>Rename an account in Mint with <a href="https://help.mint.com/Accounts-and-Transactions/888958891/How-can-I-rename-an-account.htm">these instructions</a>.</li>
 <li>This program runs in JavaScript entirely within your browser.  No data is sent anywhere.</li>
 <li>This program has been to tested to work on Quicken 2016, Chrome 74, Edge 42, Firefox 66, Internet Explorer 11, Opera 60, Safari 12.</li>
+<li>Author: Alan Nishioka (alan@nishioka.com)<br>
+    Github: <a href="https://github.com/alannishioka/mint_to_qif">https://github.com/alannishioka/mint_to_qif</a></li>
 </ul>
 <a id="output" download="result.qif"></a>
 
@@ -48,7 +51,7 @@
       return ret;
   };
 
-  // Sort by Account, then by Date, then by Original Description, then by Amount
+  // Sort by Account Name, then by Date, then by Original Description, then by Amount
   function compare_data(a,b)
   {
       if(      a[6] < b[6] ) return -1;
