@@ -10,6 +10,8 @@ Convert CSV file of transactions to QIF for import into Quicken
 * So you can select the files from the previous two months, and only new transactions will be output.
 * If you include account name, the transaction will be imported into a Quicken account of **exactly** the same name.
 * If you don't include account name, the transactions must be imported into a Quicken cash account.
+* Warning: Mint exports pending transactions, but does not include them in account totals.
+* Warning: Quicken incorrectly matches imported transactions.  You must mark them new or they won't import.
 * This program runs in JavaScript entirely within your browser.  No data is sent anywhere.
 * This program has been to tested to work on Quicken 2016, Chrome 74, Edge 42, Firefox 66, Internet Explorer 11, Opera 60, Safari 12.
 
