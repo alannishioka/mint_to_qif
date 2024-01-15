@@ -6,30 +6,42 @@
 <body>
 <div style="background-color:palegreen; padding:6px;">Mint CSV to Quicken QIF Converter</div>
 Include:
-<input type="checkbox" id="account" checked>Account Name
-<input type="checkbox" id="category">Category
-<input type="checkbox" id="notes">Notes
-<input type="file" id="file" name="files[]" multiple />
+<input type="checkbox" id="account" checked>Account Name</input>
+<input type="checkbox" id="category" checked>Category</input>
+<input type="checkbox" id="notes" checked>Notes</input>
+<input type="checkbox" id="allowDuplicates" checked>Allow Duplicates</input>
+<input type="checkbox" id="useModifiedDescription" checked>Use Modified Description</input>
+<p>
+File with Tags    <input type="file" id="tagfile" name="tagfile" ></input>
+<p>
+CSV Files&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <input type="file" id="file" name="files[]" multiple ></input>
 <ul>
-<li>If you select multiple files, any duplicate transactions will be ignored.<br>
-    (Duplicate transactions have the same account name, date, description and amount)</li>
+<li>If you select multiple files, you can UNcheck Allow Duplicates so that duplicate transactions will be ignored.<br>
+    (Duplicate transactions have the same account name, date, description and amount, WARNING this WILL ignore transactions that appear on the same day with same amount)</li>
 <li>So you can select the files from the previous two months, and only new transactions will be output.</li>
 <li>If you include account name, the transaction will be imported into a Quicken account of <b>exactly</b> the same name.</li>
 <li>If you don't include account name, the transactions must be imported into a Quicken cash account.</li>
 <li>You can rename an account in Mint with <a href="https://help.mint.com/Accounts-and-Transactions/888958891/How-can-I-rename-an-account.htm">these instructions</a>.</li>
+<li>If you want to import tags and allow multiple tags associated with a transaction, you need to keep <b>Category</b> checked, and  choose a File with Tags separated on each line in the file</li>
 <li><b>Warning:</b> Pending transactions can change date, description and amount when posted.  Delete pending transactions in Mint <b>before</b> export to avoid duplicates.</li>
-<li><b>Warning:</b> Quicken incorrectly matches imported transactions.  You must mark them new or they won't import.</li>
-<li><b>Warning:</b> Quicken incorrectly marks all transactions as transfers if "Special handling for transfers" is checked.</li>
 <li><b>Warning:</b> Do not double-click QIF file.  Quicken tries to create new database if you double-click QIF file.</li>
 <li>This program runs in JavaScript entirely within your browser.  No data is sent anywhere.</li>
-<li>This program has been to tested to work on Quicken 2016, Chrome 74, Edge 42, Firefox 66, Internet Explorer 11, Opera 60, Safari 12.</li>
+<li>This program has been to tested to work on Quicken 2024, Chrome 120, Edge 42, Firefox 66, Internet Explorer 11, Opera 60, Safari 12.</li>
 <li>Author: Alan Nishioka (alan@nishioka.com)<br>
+<li>Updated by: Eric Hillis (eric@hillis.us)<br>
     Github: <a href="https://github.com/alannishioka/mint_to_qif">https://github.com/alannishioka/mint_to_qif</a></li>
 </ul>
 <a id="output" download="result.qif"></a>
+    <p>Clipped Notes (that are longer than 63 chars) will appear below as comma separated values.<br>
+    "Clipped Value", "Original Value"</p>
+    <textarea id="clippednotes" name="clippednotes" rows="4" cols="80">
+    
+    </textarea>
 
 <script>
   'use strict';
+
+  let alltags = [];
 
   // CSV convertor by niry
   function csvToArray(text)
@@ -110,6 +122,36 @@ Include:
       readFileArray( event.target.files, 0, [] );
   }
 
+  function readTagsArray(file)
+  {
+      let fr = new FileReader();
+      fr.onload = function(e)
+      {
+          // Add result to end of global data array
+          let tags = e.target.result;
+          tags = tags.replace( /[\r\n]+/g, ',' );
+          if (tags.slice(-1) == ',') {
+              tags = tags.slice(0, -1);
+          }
+          alltags = tags.split(',');
+          var categoryElem = document.getElementById('category');
+          if (categoryElem) {
+              categoryElem.checked = true;
+          }
+      };
+
+      if (file) {
+          // Read file in array
+          fr.readAsText(file);
+      }
+  }
+
+  function handleTagFileSelect(event)
+  {
+      // Start reading file array
+      readTagsArray( event.target.files[0] );
+  }
+
   function output_result(data)
   {
       // Add date stamp for compare
@@ -131,12 +173,21 @@ Include:
       let result = '';
       let duplicate = false;
       let results = 0;
+      let allowDuplicates = false;
+      // let textareanl = '&#13;&#10;';
+      let textareanl = '\n';
+      let clippedstringnews = [];
+      let clippedstringorigs = [];
+
+      if (document.getElementById('allowDuplicates').checked) {
+          allowDuplicates = true;
+      }
       for( let i = 0; i < data.length; i++ )
       {
           //console.log(data[i]);
 
           // Can't compare final element to anything
-          if(( i < data.length-1 ) && ( compare_data( data[i], data[i+1] ) == 0 ))
+          if(( i < data.length-1 ) && !allowDuplicates && ( compare_data( data[i], data[i+1] ) == 0 ))
           {
               duplicate = true;
           }
@@ -156,9 +207,13 @@ Include:
                   }
 
                   let date = data[i][0];
-                  let description = data[i][2];
+                  let description = data[i][1];
+                  if (!document.getElementById('useModifiedDescription').checked) {
+                      description = data[i][2];
+                  }
                   let amount = data[i][3];
                   let category = data[i][5];
+                  let tags = data[i][7];
                   let notes = data[i][8];
 
                   if( data[i][4] == 'debit' ) amount = "-" + amount;
@@ -166,12 +221,36 @@ Include:
                   // Replace carriage return or line feed in notes
                   notes = notes.replace( /[\r\n]+/g, " " );
 
+                  if (notes.length > 63) {
+                      const clippedstringorig = notes;
+                      notes = notes.substring(0,63);
+                      const clippedstringnew = notes;
+                      clippedstringnews.push(clippedstringnew);
+                      clippedstringorigs.push(clippedstringorig);
+                  }
+
                   result += "D" + date + "\n";
                   result += "U" + amount + "\n";
                   result += "T" + amount + "\n";
                   result += "P" + description + "\n";
                   if( document.getElementById('notes').checked )    result += "M" + notes + "\n";
-                  if( document.getElementById('category').checked ) result += "L" + category + "\n";
+                  if( document.getElementById('category').checked ) {
+                      let tagString = '';
+                      if (tags !== '') {
+                          var isFirst = true;
+                          for ( var ii = 0; ii < alltags.length; ii++ ) {
+                              if (tags.includes(alltags[ii])) {
+                                  if (isFirst) {
+                                      tagString = '/' + alltags[ii];
+                                      isFirst = false;
+                                  } else {
+                                      tagString = tagString + ':' + alltags[ii];
+                                  }
+                              }
+                          }
+                      }
+                      result += "L" + category + tagString + "\n";
+                  }
                   result += "^\n";
 
                   // Increment counter
@@ -179,6 +258,16 @@ Include:
               }
               duplicate = false;
           }
+      }
+
+      if (clippedstringorigs.length > 0) {
+          let outstring = '';
+          for ( let ii = 0; ii < clippedstringorigs.length; ii++ ) {
+              outstring = outstring.concat( '"' + clippedstringnews[ii] + '","' + clippedstringorigs[ii] + '"' + textareanl );
+          }
+          document.getElementById('clippednotes').value = outstring;
+      } else {
+	  document.getElementById('clippednotes').value = 'no notes were clipped (ie. not longer than 63 characters)';
       }
 
       // Output result
@@ -195,7 +284,9 @@ Include:
       }
   }
 
+  document.getElementById('tagfile').addEventListener('change', handleTagFileSelect, false);
   document.getElementById('file').addEventListener('change', handleFileSelect, false);
+
 </script>
 </body>
 </html>
